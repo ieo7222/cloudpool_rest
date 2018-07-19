@@ -339,6 +339,32 @@ const UTIL = (function() {
     );
   }
 
+  var makefolder = function(Accesstoken, folderDir, callback) {
+
+    var query = {
+      "path": folderDir,
+      "autorename": false
+    };
+    var data = JSON.stringify(query);
+    var headers = {
+      'Authorization': 'Bearer ' + Accesstoken,
+      'Content-Type': 'application/json'
+    };
+    request.post({
+        url: 'https://api.dropboxapi.com/2/files/create_folder_v2',
+        headers: headers,
+        body: data
+      },
+      function(error, response, body) {
+        if (error) {
+          callback("error");
+        } else {
+          console.log(body);
+          callback("success");
+        }
+      }
+    );
+  }
 
   return {
     list: listfile,
@@ -349,7 +375,8 @@ const UTIL = (function() {
     filter: filterfile,
     refresh: refreshfile,
     search: searchfile,
-    move: movefile
+    move: movefile,
+    makefolder : makefolder
   }
 
 })();

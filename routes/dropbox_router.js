@@ -340,4 +340,49 @@ module.exports = function(app) {
     });
   });
 
+  // Move the file to selected Folder
+  app.post('/api/dropbox/makefolder/', function(req, res) {
+    console.log("makefolder call");
+    var user_id = req.body.user_id;
+    var folderDir = req.body.folderDir;
+    folderDir = folderDir.replace(/[*]/g, "/");
+    if(folderDir.charAt(0)==="/"){
+      folderDir= folderDir;
+    }
+    else{
+      folderDir= "/" + folderDir;
+    }
+    console.log(folderDir);
+    dbx_file_list.findOne({
+      user_id: user_id
+    }, function(err, list) {
+      var Accesstoken = list.accesstoken;
+      dbxutil.makefolder(Accesstoken, folderDir, function(result) {
+        if (result == "error") {
+          res.json("error");
+        } else {
+          console.log("make folder result : " + result);
+          var nowTime = new Date().getTime();
+          //위치 바꾸고 리스트 최신화
+          dbxutil.list(Accesstoken, '', function(filelist) {
+            dbx_file_list.update({
+              user_id: user_id
+            }, {
+              $set: {
+                check_time: nowTime,
+                file_list: filelist
+              }
+            }, function(err, output) {
+              if (err) console.log("error : " + err);
+              console.log(output);
+              if (!output.n) return console.log('error: dbx_list not found');
+              res.json("success");
+            })
+          });
+        }
+      });
+    });
+  });
+
+
 }
