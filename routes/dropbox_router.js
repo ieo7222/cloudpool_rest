@@ -149,6 +149,7 @@ module.exports = function(app) {
       user_id: user_id
     }, function(err, list) {
       var Accesstoken = list.accesstoken;
+      console.log("-------------------------------finish");
       dbxutil.changename(Accesstoken, req.body.file_name, req.body.newName, folder, function(result) {
         if (result == "error") {
           res.json("error");

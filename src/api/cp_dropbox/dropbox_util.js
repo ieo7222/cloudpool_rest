@@ -106,8 +106,12 @@ const UTIL = (function() {
   }
 
   var changenamefile = function(Accesstoken, filename, newname, FolderDir, callback) {
+    var filename = filename.replace(/[*]/g,"/");
+    console.log("===========filename : "+filename);
+    console.log("===========FolderDir : "+FolderDir);
+    console.log("===========newname : "+newname);
     var query = {
-      "from_path": FolderDir + "/" + filename,
+      "from_path": filename,
       "to_path": FolderDir + "/" + newname,
       "allow_shared_folder": false,
       "autorename": false,
