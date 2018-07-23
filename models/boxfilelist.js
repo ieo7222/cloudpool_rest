@@ -9,7 +9,6 @@ var box_file_list = new Schema({
   refreshtoken : String,
   check : Boolean,
   check_time : { type: String , default: Date.now  },
-  folderID : String,
   file_list: Array
 });
 
