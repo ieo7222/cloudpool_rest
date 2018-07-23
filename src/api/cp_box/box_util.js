@@ -41,29 +41,38 @@ module.exports = (function(){
     var Option={
       "user_id":userId
     }
-    box_file_list.find(Option,{file_list:1,_id:0,} ,function(err, userlist){
+    box_file_list.find(Option,{file_list:1,_id:0} ,function(err, userlist){
       if(err){
         console.log("db Find method error : ",err);
       }
       else{
         var filteredList =[];
         async.map(userlist[0].file_list,
-            function(file,callback_list){
-                if(file.parents==folderId){
-                    filteredList.push(file);
-                }
-                callback_list(null);
-            },
-            function(err,result){
-                if(err) {
-                  console.log("Fail the Folder list error code : ",err);
-                  callback(null);
-                }
-                else {
-                  console.log('Finished Filtering');
-                    callback(filteredList);
-                }
-            });
+          function(file,callback_list){
+            if(file.id==folderId){
+              var beforeFolder = {
+                'id' : file.parents,
+                'name' : '..',
+                'mimeType' : 'folder'
+              }
+              filteredList.push(beforeFolder);
+            }
+            else if(file.parents==folderId){
+              filteredList.push(file);
+            }
+            callback_list(null);
+          },
+          function(err,result){
+            if(err) {
+              console.log("Fail the Folder list error code : ",err);
+              callback(null);
+            }
+            else {
+              console.log('Finished Filtering');
+              callback(filteredList);
+            }
+          }
+        );
       }
     });
   }
