@@ -12,10 +12,7 @@
 
 const fs = require('fs');
 const BoxSDK = require('box-node-sdk');
-const http = require('https');
-const mysql = require('mysql');
-const dbutil = require('../db/db_util');
-const client_info = require('../config/client_info');
+const client_info = require('../../../config/client_info.js');
 
 module.exports = function(Accesstoken, callback){
 
