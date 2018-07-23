@@ -430,5 +430,22 @@ module.exports = function(app) {
     });
   });
 
+  app.post('/api/dropbox/getThumbnail/', function(req, res) {
+    console.log("getThumbnail call");
+    var user_id = req.body.user_id;
+    var filepath = req.body.filepath;
+    filepath = filepath.replace(/[*]/g, "/");
+
+    dbx_file_list.findOne({
+      user_id: user_id
+    }, function(err, list) {
+      var Accesstoken = list.accesstoken;
+      dbxutil.getThumbnail(Accesstoken, filepath, function(result){
+        
+        res.json(result);
+      })
+
+    });
+  });
 
 }

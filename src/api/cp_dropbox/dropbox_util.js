@@ -145,17 +145,6 @@ const UTIL = (function() {
 
 
 
-  var coutinuelistfile = function() {
-    var filelist = [];
-    initDropbox(Accesstoken, function(dbx) {
-      const fetchData = async () => {
-        const data = await dbx.filesListFolderContinue({
-          'cursor': 'YOUR_CURSOR_HERE',
-        });
-        console.log(data);
-      };
-    })
-  }
 
 
   var listfile = function(Accesstoken, FolderDir, callback) {
@@ -408,17 +397,50 @@ const UTIL = (function() {
     );
   }
 
+  var getThumbnail = function(Accesstoken, filepath, callback){
+    var query = {
+      "entries":[
+        {
+          "path": filepath,
+          "format": "jpeg",
+          "size": "w64h64",
+          "mode": "strict"
+        }
+      ]
+    };
+    var data = JSON.stringify(query);
+    var headers = {
+      'Authorization': 'Bearer '+Accesstoken,
+      'Content-Type': 'application/json'
+    };
+    request.post({
+        // url: 'https://content.dropboxapi.com/2/files/get_preview',
+        url: 'https://content.dropboxapi.com/2/files/get_thumbnail_batch',
+        headers: headers,
+        body : data
+      },
+      function(error, response, body) {
+        if (error) {
+        } else {
+          console.log("====================================================");
+          var body = JSON.parse(response.body);
+          callback(body);
+        }
+      }
+    );
+  }
+
   return {
     list: listfile,
     preview: previewfile,
     changename: changenamefile,
-    continuelist: coutinuelistfile,
     searchtype: searchtypefile,
     filter: filterfile,
     refresh: refreshfile,
     search: searchfile,
     move: movefile,
-    makefolder : makefolder
+    makefolder : makefolder,
+    getThumbnail : getThumbnail
   }
 
 })();
