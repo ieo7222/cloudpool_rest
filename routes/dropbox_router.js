@@ -29,10 +29,6 @@ function unicodeToKor(before){
 module.exports = function(app) {
   // 최초 등록
   app.post('/api/dropbox/set/', function(req, res) {
-    // {
-    //   user_id : user_id,
-    //   CP_love :
-    // }
     var Accesstoken = req.body.CP_love;
     var FolderID = '';
     console.log(Accesstoken);
@@ -58,9 +54,6 @@ module.exports = function(app) {
     });
   });
 
-  app.post('/api/dropbox/createfolder/', function(req, res) {
-
-  })
 
   // GET ALL filelist
   // app.get('/api/dropbox/checkall/', function(req, res) {
@@ -102,6 +95,58 @@ module.exports = function(app) {
     });
 
   });
+
+
+  // Refresh All filelist
+  // app.post('/api/dropbox/refresh/', function(req, res) {
+  //   var user_id = req.body.user_id;
+  //   if (req.body.folderID.includes('%25')) {
+  //     var name = req.body.folderID.replace("%25", "%");
+  //     var folder = name;
+  //   } else {
+  //     var folder = unicodeToKor(req.body.folderID);
+  //   }
+  //   // var folder = unicodeToKor(req.body.folderID);
+  //   console.log("refresh folder name is " + folder);
+  //   //accesstoken 몽고디비로부터 가져와야함
+  //
+  //   dbx_file_list.findOne({
+  //     user_id: user_id
+  //   }, function(err, list) {
+  //     var Accesstoken = list.accesstoken;
+  //     //이름 바꾸고 리스트 최신화
+  //     var query = {
+  //       "path": '',
+  //       "recursive": true,
+  //       "include_media_info": false,
+  //       "include_deleted": false,
+  //       "include_has_explicit_shared_members": false,
+  //       "include_mounted_folders": true
+  //     };
+  //     var data = JSON.stringify(query);
+  //     var headers = {
+  //       'Authorization': 'Bearer ' + Accesstoken,
+  //       'Content-Type': 'application/json'
+  //     };
+  //     request.post({
+  //         url: 'https://api.dropboxapi.com/2/files/list_folder',
+  //         headers: headers,
+  //         body: data
+  //       },
+  //       function(error, response, body) {
+  //         if (error) {
+  //           callback("error");
+  //         } else {
+  //
+  //           var result = JSON.parse(body);
+  //           console.log(result.entries);
+  //         }
+  //       }
+  //     );
+  //
+  //   });
+  //
+  // });
 
   // GET ALL filelist
   app.post('/api/dropbox/check/', function(req, res) {
@@ -149,6 +194,7 @@ module.exports = function(app) {
       user_id: user_id
     }, function(err, list) {
       var Accesstoken = list.accesstoken;
+      console.log("-------------------------------finish");
       dbxutil.changename(Accesstoken, req.body.file_name, req.body.newName, folder, function(result) {
         if (result == "error") {
           res.json("error");
@@ -339,5 +385,50 @@ module.exports = function(app) {
       });
     });
   });
+
+  // Move the file to selected Folder
+  app.post('/api/dropbox/makefolder/', function(req, res) {
+    console.log("makefolder call");
+    var user_id = req.body.user_id;
+    var folderDir = req.body.folderDir;
+    folderDir = folderDir.replace(/[*]/g, "/");
+    if(folderDir.charAt(0)==="/"){
+      folderDir= folderDir;
+    }
+    else{
+      folderDir= "/" + folderDir;
+    }
+    console.log(folderDir);
+    dbx_file_list.findOne({
+      user_id: user_id
+    }, function(err, list) {
+      var Accesstoken = list.accesstoken;
+      dbxutil.makefolder(Accesstoken, folderDir, function(result) {
+        if (result == "error") {
+          res.json("error");
+        } else {
+          console.log("make folder result : " + result);
+          var nowTime = new Date().getTime();
+          //위치 바꾸고 리스트 최신화
+          dbxutil.list(Accesstoken, '', function(filelist) {
+            dbx_file_list.update({
+              user_id: user_id
+            }, {
+              $set: {
+                check_time: nowTime,
+                file_list: filelist
+              }
+            }, function(err, output) {
+              if (err) console.log("error : " + err);
+              console.log(output);
+              if (!output.n) return console.log('error: dbx_list not found');
+              res.json("success");
+            })
+          });
+        }
+      });
+    });
+  });
+
 
 }

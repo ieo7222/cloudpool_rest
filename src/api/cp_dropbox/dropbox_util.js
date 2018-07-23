@@ -21,7 +21,7 @@ var mimelist = {
   "document": ['application/x-abiword', 'text/css', 'text/csv', 'application/msword', 'application/vnd.oasis.opendocument.presentation', 'application/vnd.oasis.opendocument.spreadsheet', 'application/vnd.oasis.opendocument.text', 'application/vnd.ms-powerpoint', 'application/vnd.ms-excel'],
   "pdf": ['application/pdf'],
   "video": ['video/x-msvideo', 'video/ogg', 'video/webm', 'video/mp4', 'video/mpeg', 'video/avi', 'video/wmv', 'video/mkv', 'video/mpg'],
-  "image": ['image/gif', 'image/x-icon', 'image/jpeg', 'image/svg+xml', 'image/tiff', 'image/webp', 'image/jpg'],
+  "image": ['image/gif', 'image/x-icon', 'image/jpeg', 'image/svg+xml', 'image/tiff', 'image/webp', 'image/jpg', 'image/png'],
   "audio": ['audio/aac', 'audio/midi', 'audio/ogg', 'audio/x-wav', 'audio/webm', 'audio/mp3', 'audio/wma']
   // "etc":
 };
@@ -64,6 +64,9 @@ const UTIL = (function() {
    *
    */
   var refreshfile = function(user_id, folder, callback) {
+    var now = new Date().getTime();
+    console.log("=========================================START================================================");
+    console.log(now);
     dbx_file_list.findOne({
       user_id: user_id
     }, function(err, list) {
@@ -82,6 +85,8 @@ const UTIL = (function() {
           if (err) console.log("error : " + err);
           console.log(output);
           if (!output.n) return console.log('error: dbx_list not found');
+          var after = new Date().getTime();
+          console.log("==========================================================================FINISH===========================================================");
           callback("success");
         })
       });
@@ -106,8 +111,12 @@ const UTIL = (function() {
   }
 
   var changenamefile = function(Accesstoken, filename, newname, FolderDir, callback) {
+    var filename = filename.replace(/[*]/g,"/");
+    console.log("===========filename : "+filename);
+    console.log("===========FolderDir : "+FolderDir);
+    console.log("===========newname : "+newname);
     var query = {
-      "from_path": FolderDir + "/" + filename,
+      "from_path": filename,
       "to_path": FolderDir + "/" + newname,
       "allow_shared_folder": false,
       "autorename": false,
@@ -151,53 +160,86 @@ const UTIL = (function() {
 
   var listfile = function(Accesstoken, FolderDir, callback) {
     var filelist = [];
-    initDropbox(Accesstoken, function(dbx) {
-      console.log("list");
-      console.log("FolderDir : " + FolderDir);
-      dbx.filesListFolder({
-          path: FolderDir,
-          recursive: true
-        }) //list 원하는 경로
-        .then(function(response) {
-          async.map(response.entries,
-            function(file, callback_list) {
-              //각각 디렉토리의 파일리스트 읽어오기
-              if (file != undefined) {
-                if (file['.tag'] == 'folder') {
-                  var extension = 'folder';
-                } else {
-                  var fullname = file.name.split(".");
-                  var extension = mime.getType(fullname[fullname.length - 1]);
-                }
-                var path = file.path_display.split("/");
-                var fileinfo = {
-                  "id": file.id,
-                  "name": file.name,
-                  "mimeType": extension,
-                  "modifiedTime": file.server_modified,
-                  "c_modifiedTime": file.client_modified,
-                  "size": file.size,
-                  "path_list": path
-                  //no parent id
-                };
-                filelist.push(fileinfo);
-                callback_list(null, "finish")
-              } else callback_list(null, "finish");
+    // initDropbox(Accesstoken, function(dbx) {
+    //   console.log("list");
+    //   console.log("FolderDir : " + FolderDir);
+    //   dbx.filesListFolder({
+    //       path: FolderDir,
+    //       recursive: true
+    //     }) //list 원하는 경로
+    //     .then(function(response) {
+          var query = {
+            "path": '',
+            "recursive": true,
+            "include_media_info": false,
+            "include_deleted": false,
+            "include_has_explicit_shared_members": false,
+            "include_mounted_folders": true
+          };
+          var data = JSON.stringify(query);
+          var headers = {
+            'Authorization': 'Bearer ' + Accesstoken,
+            'Content-Type': 'application/json'
+          };
+          request.post({
+              url: 'https://api.dropboxapi.com/2/files/list_folder',
+              headers: headers,
+              body: data
             },
-            function(err, result) {
-              if (err) console.log(err);
-              //list 받아오기 완료
-              else {
-                console.log('Finish the File list');
-                callback(filelist);
+            function(error, response, body) {
+              if (error) {
+                callback("error");
+              } else {
+                var result = JSON.parse(body);
+
+                async.map(result.entries,
+                  function(file, callback_list) {
+                    //각각 디렉토리의 파일리스트 읽어오기
+                    if (file != undefined) {
+                      if (file['.tag'] == 'folder') {
+                        var extension = 'folder';
+                      } else {
+                        var fullname = file.name.split(".");
+                        var extension = mime.getType(fullname[fullname.length - 1]);
+                      }
+                      var path = file.path_display.split("/");
+                      var fileinfo = {
+                        "id": file.id,
+                        "name": file.name,
+                        "mimeType": extension,
+                        "modifiedTime": file.server_modified,
+                        "c_modifiedTime": file.client_modified,
+                        "size": file.size,
+                        "path_list": path
+                        //no parent id
+                      };
+                      filelist.push(fileinfo);
+                      callback_list(null, "finish")
+                    } else callback_list(null, "finish");
+                  },
+                  function(err, result) {
+                    if (err) console.log(err);
+                    //list 받아오기 완료
+                    else {
+                      console.log('Finish the File list');
+                      callback(filelist);
+                    }
+                  }
+                );
+
               }
             }
           );
-        })
-        .catch(function(error) {
-          console.error(error);
-        });
-    });
+
+
+
+
+
+    //     })
+    //     .catch(function(error) {
+    //       console.error(error);
+    //     });
+    // });
   };
 
   var searchtypefile = function(dbx_file_list, keytype, folderID, callback) {
@@ -339,6 +381,32 @@ const UTIL = (function() {
     );
   }
 
+  var makefolder = function(Accesstoken, folderDir, callback) {
+
+    var query = {
+      "path": folderDir,
+      "autorename": false
+    };
+    var data = JSON.stringify(query);
+    var headers = {
+      'Authorization': 'Bearer ' + Accesstoken,
+      'Content-Type': 'application/json'
+    };
+    request.post({
+        url: 'https://api.dropboxapi.com/2/files/create_folder_v2',
+        headers: headers,
+        body: data
+      },
+      function(error, response, body) {
+        if (error) {
+          callback("error");
+        } else {
+          console.log(body);
+          callback("success");
+        }
+      }
+    );
+  }
 
   return {
     list: listfile,
@@ -349,7 +417,8 @@ const UTIL = (function() {
     filter: filterfile,
     refresh: refreshfile,
     search: searchfile,
-    move: movefile
+    move: movefile,
+    makefolder : makefolder
   }
 
 })();
