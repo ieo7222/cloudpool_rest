@@ -65,7 +65,8 @@ module.exports = function(app)
     app.post('/api/box/refresh/token', function(req, res){
       var userId = req.body.user_id;
       var Accesstoken = req.body.accesstoken;
-      box_util.refreshToken(userId, Accesstoken, function(filelist){
+      box_util.refreshToken(userId, Accesstoken, function(result){
+        console.log('box refresh token result : '+result);
         res.json(result);
       })
     })

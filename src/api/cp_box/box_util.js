@@ -216,6 +216,7 @@ module.exports = (function(){
     listAllFiles: listAllFiles,
     searchFilelist: searchFilelist,
     refreshFilelist: refreshFilelist,
+    refreshToken: refreshToken,
     uploadFile: uploadFile,
     downloadFile: downloadFile,
     deleteFile: deleteFile,
