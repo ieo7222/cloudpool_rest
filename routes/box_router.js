@@ -69,5 +69,47 @@ module.exports = function(app)
         console.log('box refresh token result : '+result);
         res.json(result);
       })
-    })
+    });
+
+    app.post('/api/box/login/', function(req, res) {
+      box_file_list.update({
+        user_id: req.body.user_id
+      }, {
+        $set: {
+          "check": true
+        }
+      }, function(err, output) {
+        if (err) res.status(500).json({
+          error: 'database failure'
+        });
+        console.log(output);
+        if (!output.n) return res.status(404).json({
+          error: 'box_list not found'
+        });
+        res.json({
+          message: 'User login : ' + req.body.user_id
+        });
+      })
+    });
+
+    app.post('/api/box/logout/', function(req, res) {
+      box_file_list.update({
+        user_id: req.body.user_id
+      }, {
+        $set: {
+          "check": false
+        }
+      }, function(err, output) {
+        if (err) res.status(500).json({
+          error: 'database failure'
+        });
+        console.log(output);
+        if (!output.n) return res.status(404).json({
+          error: 'box_list not found'
+        });
+        res.json({
+          message: 'User logout : ' + req.body.user_id
+        });
+      });
+    });
 }

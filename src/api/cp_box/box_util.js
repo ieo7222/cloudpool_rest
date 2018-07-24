@@ -30,7 +30,6 @@ module.exports = (function(){
         }, function(err, result){
           if(err) console.log(err);
           else {
-            console.log('Finish the File list:'+folderId);
             callback(filelist);
           }
         });
@@ -68,7 +67,6 @@ module.exports = (function(){
               callback(null);
             }
             else {
-              console.log('Finished Filtering');
               callback(filteredList);
             }
           }
