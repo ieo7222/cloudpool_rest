@@ -16,7 +16,7 @@ module.exports = function(app)
 {
     // 최초 등록
     app.post('/api/box/set/', function(req, res){
-      var Accesstoken = req.body.CP_love;
+      var Accesstoken = req.body.accesstoken;
       var FolderID = '0';
       box_init(Accesstoken, function(client){
         box_util.listAllFiles(client, FolderID, function(filelist){
@@ -45,4 +45,28 @@ module.exports = function(app)
       });
     });
 
+    app.post('/api/box/refresh/filelist', function(req, res){
+      var userId=req.body.user_id;
+      var folderId ='0';
+      box_file_list.findOne({
+        user_id: userId
+      }, function(err, userlist){
+        var Accesstoken = userlist.accesstoken;
+        box_init(Accesstoken, function(client){
+          box_util.listAllFiles(client, folderId, function(filelist){
+            box_util.refreshFilelist(userId, filelist, function(result){
+              res.json(result);
+            });
+          });
+        });
+      });
+    });
+
+    app.post('/api/box/refresh/token', function(req, res){
+      var userId = req.body.user_id;
+      var Accesstoken = req.body.accesstoken;
+      box_util.refreshToken(userId, Accesstoken, function(filelist){
+        res.json(result);
+      })
+    })
 }

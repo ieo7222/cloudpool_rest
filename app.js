@@ -6,7 +6,7 @@ var app         = express();
 var bodyParser  = require('body-parser');
 var mongoose    = require('mongoose');
 var mongodb     = require('./config/mongodb.js');
-// var autocheck   = require('./src/api/cp_dropbox/dropbox_auto.js');
+var autocheck   = require('./src/api/cp_dropbox/dropbox_auto.js');
 // CONNECT TO MONGODB SERVER
 // var db = mongoose.connection;
 // db.on('error', console.error);
@@ -18,7 +18,7 @@ var mongodb     = require('./config/mongodb.js');
 // mongoose.connect('mongodb://localhost/cloudpool_api_server');
 
 mongodb();
-// autocheck();
+autocheck();
 
 // [CONFIGURE APP TO USE bodyParser]
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -37,7 +37,7 @@ var port = process.env.PORT || 4000;
 
 
 // [CONFIGURE ROUTER] - 스키마 전달
-// var dropbox_router = require('./routes/dropbox_router')(app);
+var dropbox_router = require('./routes/dropbox_router')(app);
 var box_router = require('./routes/box_router')(app);
 
 

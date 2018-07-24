@@ -77,6 +77,35 @@ module.exports = (function(){
     });
   }
 
+  var refreshFilelist = function(user_id, filelist, callback){
+    var nowTime = new Date().getTime();
+    box_file_list.update({
+      user_id: user_id
+    }, {
+      $set: {
+        check_time: nowTime,
+        file_list: filelist
+      }
+    }, function(err, output) {
+      if (err) callback("error : " + err);
+      else if (!output.n) callback('error: box_list not found');
+      else callback("success");
+    })
+  }
+
+  var refreshToken = function(user_id, accesstoken, callback){
+    box_file_list.update({
+      user_id: user_id
+    }, {
+      $set: {
+        accesstoken: accesstoken
+      }
+    }, function(err, output) {
+      if (err) callback("error : " + err);
+      else callback("success");
+    })
+  }
+
   var uploadFile = function(client, FileInfo, FolderID){
     var stream = fs.createReadStream(FileInfo.path);
     client.files.uploadFile(FolderID, FileInfo.name, stream, function(err ,newfile){
@@ -186,6 +215,7 @@ module.exports = (function(){
   return {
     listAllFiles: listAllFiles,
     searchFilelist: searchFilelist,
+    refreshFilelist: refreshFilelist,
     uploadFile: uploadFile,
     downloadFile: downloadFile,
     deleteFile: deleteFile,
