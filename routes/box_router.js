@@ -112,4 +112,20 @@ module.exports = function(app)
         });
       });
     });
+
+    app.post('/api/box/relieve', function(req, res) {
+      var userID = req.body.user_id;
+      box_file_list.remove({
+        user_id: userID
+      }, function(err, output) {
+        if (err) {
+          console.log('[INFO] '+userID+'\'s box_file_lists remove error : '+err)
+          res.json(err);
+        }
+        else {
+          console.log('[INFO] '+userID+'\'s box_file_lists removed')
+          res.json('success');
+        }
+      });
+    });
 }
