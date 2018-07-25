@@ -197,6 +197,20 @@ module.exports = (function(){
     });
   }
 
+  var createFolder = function(client, folderID, foldername, callback) {
+    client.folders.create(folderID, foldername, function(err, newfolder){
+      var folder = {
+        'id' : newfolder.id,
+        'name' : newfolder.name,
+        'mimeType' : newfolder.type,
+        'modifiedTime' : newfolder.modified_at,
+        'size' : newfolder.size,
+        'parents' : folderID
+      }
+      callback(folder);
+    });
+  }
+
   var renameFile = function(client, fileId, newname){
     client.files.update(fileId, {name : newname})
   	.then(updatedFile => {
@@ -285,6 +299,7 @@ module.exports = (function(){
     downloadFile: downloadFile,
     deleteFile: deleteFile,
     deleteFileRest: deleteFileRest,
+    createFolder: createFolder,
     renameFile: renameFile,
     renameFolder: renameFolder,
     moveFile: moveFile,

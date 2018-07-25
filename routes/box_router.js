@@ -163,4 +163,22 @@ module.exports = function(app)
         });
       });
     });
+
+    app.post('/api/box/create', function(req, res) {
+      var user_id = req.body.user_id;
+      var folderID = req.body.folderID;
+      var foldername = req.body.foldername;
+      box_file_list.findOne({
+        user_id: user_id
+      }, function(err, userlist){
+        var Accesstoken = userlist.accesstoken;
+        box_init(Accesstoken, function(client){
+          box_util.createFolder(client, folderID, foldername, function(folder){
+            box_util.uploadFileRest(user_id, folder, function(result){
+              res.json(result);
+            });
+          });
+        });
+      });
+    });
 }
