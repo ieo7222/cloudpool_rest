@@ -212,8 +212,9 @@ var addFileList = function(oauth2Client,userId,folderId, CallBack){
     console.log('searchFilelist'); 
     var searchfilelist = function (userId,folderId,keyWord,orderKey,keyType, callback){
       google_file_list.find({"user_id":userId},{file_list:1,_id:0,} ,function(err, userlist){
-        if(err){
+        if(err||userlist[0].file_list==undefined){
           console.log("db Find method error : ",err);
+          callback();
         }
         else{
           var filteredList =[];
@@ -223,13 +224,14 @@ var addFileList = function(oauth2Client,userId,folderId, CallBack){
           else if(keyType=="image") var mimetype = mimelist.image;
           else if(keyType=="audio") var mimetype = mimelist.audio;
           console.log("keyType : ",mimetype);
-  
+
           async.map(userlist[0].file_list, 
               function(file,callback_list){
                   if(folderId!=undefined&&file.parents==folderId){
                     console.log(file.parents==folderId);
                     //folder 클릭에 의한 list
-                    filteredList.push(file);
+                    if(file.mimeType=='application/vnd.google-apps.folder') filteredList.unshift(file);
+                    else filteredList.push(file);
                   }
                   else if(folderId==undefined){
                     //검색 or 카테고리클릭에 의한 list
@@ -289,9 +291,9 @@ var addFileList = function(oauth2Client,userId,folderId, CallBack){
                           console.log('name arrange');
                         }
                         else if(orderKey=='type'){
+                          console.log('type정렬!');
                           filteredList.sort(function(a,b) {
-                            return parseFloat(a.mimeType) - parseFloat(b.mimeType);
-                          });
+                            return parseFloat(b.mimeType.indexOf('folder')) -parseFloat(a.mimeType.indexOf('folder'));                          });
                           console.log('type arrange');
                         }
                       }
@@ -314,6 +316,7 @@ var addFileList = function(oauth2Client,userId,folderId, CallBack){
         }
           console.log('탐색 id : rootId[0].root_id',);
         searchfilelist(userId,rootId[0].root_id,keyWord,orderKey,keyType, function(FileList){
+          console.log('넘어온거',FileList );
           FileList.unshift(rootId[0].root_id);
           CallBack(FileList);
         })
