@@ -38,8 +38,8 @@ var port = process.env.PORT || 4000;
 
 // [CONFIGURE ROUTER] - 스키마 전달
 // var dropbox_router = require('./routes/dropbox_router')(app);
-var box_router = require('./routes/box_router')(app);
-
+// var box_router = require('./routes/box_router')(app);
+var google_router = require('./routes/google_router')(app);
 
 // [RUN SERVER]
 var server = app.listen(port, function(){
