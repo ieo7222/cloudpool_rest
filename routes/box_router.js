@@ -145,5 +145,22 @@ module.exports = function(app)
           });
         });
       });
-    })
+    });
+
+    app.post('/api/box/delete', function(req, res) {
+      var userID = req.body.user_id;
+      var fileId = req.body.fileId;
+      box_file_list.findOne({
+        user_id: userID
+      }, function(err, userlist){
+        var Accesstoken = userlist.accesstoken;
+        box_init(Accesstoken, function(client){
+          box_util.deleteFile(client, fileId, function(result){
+            box_util.deleteFileRest(userID, fileId, result, function(result_rest){
+              res.json(result_rest);
+            });
+          });
+        });
+      });
+    });
 }

@@ -149,10 +149,52 @@ module.exports = (function(){
     })
   }
 
-  var deleteFile = function(client, fileId){
+  var deleteFile = function(client, fileId, callback){
     client.files.delete(fileId).then(() => {
       console.log('deletion succeeded');
-    })
+      callback(1);
+    });
+  }
+
+  var deleteFileRest = function(user_id, fileId, result, callback){
+    var Option={
+      "user_id":user_id
+    }
+    box_file_list.find(Option,{file_list:1,_id:0} ,function(err, userlist){
+      if(err){
+        console.log("db Find method error : ",err);
+      }
+      else{
+        var deletefile;
+        async.map(userlist[0].file_list,
+          function(file,callback_list){
+            if(file.id==fileId){
+              deletefile = file;
+            }
+            callback_list(null);
+          },
+          function(err,result){
+            if(err) {
+              console.log("Fail the find deletefile error code : ",err);
+              callback(err);
+            }
+            else {
+              box_file_list.update({
+                user_id: user_id
+              }, {
+                $pull: {
+                  file_list: deletefile
+                }
+              }, function(err, output) {
+                if (err) callback("error : " + err);
+                else if (!output.n) callback('error: box_list not found');
+                else callback("success");
+              })
+            }
+          }
+        );
+      }
+    });
   }
 
   var renameFile = function(client, fileId, newname){
@@ -242,6 +284,7 @@ module.exports = (function(){
     uploadFileRest: uploadFileRest,
     downloadFile: downloadFile,
     deleteFile: deleteFile,
+    deleteFileRest: deleteFileRest,
     renameFile: renameFile,
     renameFolder: renameFolder,
     moveFile: moveFile,
