@@ -104,15 +104,38 @@ module.exports = (function(){
     })
   }
 
-  var uploadFile = function(client, FileInfo, FolderID){
+  var uploadFile = function(client, FolderID, FileInfo, callback){
     var stream = fs.createReadStream(FileInfo.path);
     client.files.uploadFile(FolderID, FileInfo.name, stream, function(err ,newfile){
       if(err) console.log(err);
       else{
         //파일 아이디
         console.log(newfile.entries[0].id);
+        var uploadfile = {
+          'id' : newfile.entries[0].id,
+          'name' : newfile.entries[0].name,
+          'mimeType' : newfile.entries[0].type,
+          'modifiedTime' : newfile.entries[0].modified_at,
+          'size' : newfile.entries[0].size,
+          'parents' : FolderID
+        }
+        callback(uploadfile);
       }
     });
+  }
+
+  var uploadFileRest = function(userId, uploadfile, callback) {
+    box_file_list.update({
+      user_id: userId
+    }, {
+      $push: {
+        file_list: uploadfile
+      }
+    }, function(err, output) {
+      if (err) callback("error : " + err);
+      else if (!output.n) callback('error: box_list not found');
+      else callback("success");
+    })
   }
 
   var downloadFile = function(client, fileId){
@@ -216,6 +239,7 @@ module.exports = (function(){
     refreshFilelist: refreshFilelist,
     refreshToken: refreshToken,
     uploadFile: uploadFile,
+    uploadFileRest: uploadFileRest,
     downloadFile: downloadFile,
     deleteFile: deleteFile,
     renameFile: renameFile,

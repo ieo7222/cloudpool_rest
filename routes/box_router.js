@@ -128,4 +128,22 @@ module.exports = function(app)
         }
       });
     });
+
+    app.post('/api/box/upload', function(req, res) {
+      var userID = req.body.user_id;
+      var folderID = req.body.folderId;
+      var FileInfo = req.body.FileInfo;
+      box_file_list.findOne({
+        user_id: userID
+      }, function(err, userlist){
+        var Accesstoken = userlist.accesstoken;
+        box_init(Accesstoken, function(client){
+          box_util.uploadFile(client, folderID, FileInfo, function(uploadfile){
+            box_util.uploadFileRest(userID, uploadfile, function(result){
+              res.json(result);
+            });
+          });
+        });
+      });
+    })
 }
