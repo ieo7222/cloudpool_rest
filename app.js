@@ -7,6 +7,7 @@ var bodyParser  = require('body-parser');
 var mongoose    = require('mongoose');
 var mongodb     = require('./config/mongodb.js');
 var autocheck   = require('./src/api/cp_dropbox/dropbox_auto.js');
+var autocheck_box   = require('./src/api/cp_box/box_auto.js');
 // CONNECT TO MONGODB SERVER
 // var db = mongoose.connection;
 // db.on('error', console.error);
@@ -19,6 +20,7 @@ var autocheck   = require('./src/api/cp_dropbox/dropbox_auto.js');
 
 mongodb();
 autocheck();
+autocheck_box();
 
 // [CONFIGURE APP TO USE bodyParser]
 app.use(bodyParser.urlencoded({ extended: true }));

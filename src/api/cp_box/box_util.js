@@ -30,7 +30,6 @@ module.exports = (function(){
         }, function(err, result){
           if(err) console.log(err);
           else {
-            console.log('Finish the File list:'+folderId);
             callback(filelist);
           }
         });
@@ -68,7 +67,6 @@ module.exports = (function(){
               callback(null);
             }
             else {
-              console.log('Finished Filtering');
               callback(filteredList);
             }
           }
@@ -77,15 +75,67 @@ module.exports = (function(){
     });
   }
 
-  var uploadFile = function(client, FileInfo, FolderID){
+  var refreshFilelist = function(user_id, filelist, callback){
+    var nowTime = new Date().getTime();
+    box_file_list.update({
+      user_id: user_id
+    }, {
+      $set: {
+        check_time: nowTime,
+        file_list: filelist
+      }
+    }, function(err, output) {
+      if (err) callback("error : " + err);
+      else if (!output.n) callback('error: box_list not found');
+      else callback("success");
+    })
+  }
+
+  var refreshToken = function(user_id, accesstoken, callback){
+    box_file_list.update({
+      user_id: user_id
+    }, {
+      $set: {
+        accesstoken: accesstoken
+      }
+    }, function(err, output) {
+      if (err) callback("error : " + err);
+      else callback("success");
+    })
+  }
+
+  var uploadFile = function(client, FolderID, FileInfo, callback){
     var stream = fs.createReadStream(FileInfo.path);
     client.files.uploadFile(FolderID, FileInfo.name, stream, function(err ,newfile){
       if(err) console.log(err);
       else{
         //파일 아이디
         console.log(newfile.entries[0].id);
+        var uploadfile = {
+          'id' : newfile.entries[0].id,
+          'name' : newfile.entries[0].name,
+          'mimeType' : newfile.entries[0].type,
+          'modifiedTime' : newfile.entries[0].modified_at,
+          'size' : newfile.entries[0].size,
+          'parents' : FolderID
+        }
+        callback(uploadfile);
       }
     });
+  }
+
+  var uploadFileRest = function(userId, uploadfile, callback) {
+    box_file_list.update({
+      user_id: userId
+    }, {
+      $push: {
+        file_list: uploadfile
+      }
+    }, function(err, output) {
+      if (err) callback("error : " + err);
+      else if (!output.n) callback('error: box_list not found');
+      else callback("success");
+    })
   }
 
   var downloadFile = function(client, fileId){
@@ -99,10 +149,66 @@ module.exports = (function(){
     })
   }
 
-  var deleteFile = function(client, fileId){
+  var deleteFile = function(client, fileId, callback){
     client.files.delete(fileId).then(() => {
       console.log('deletion succeeded');
-    })
+      callback(1);
+    });
+  }
+
+  var deleteFileRest = function(user_id, fileId, result, callback){
+    var Option={
+      "user_id":user_id
+    }
+    box_file_list.find(Option,{file_list:1,_id:0} ,function(err, userlist){
+      if(err){
+        console.log("db Find method error : ",err);
+      }
+      else{
+        var deletefile;
+        async.map(userlist[0].file_list,
+          function(file,callback_list){
+            if(file.id==fileId){
+              deletefile = file;
+            }
+            callback_list(null);
+          },
+          function(err,result){
+            if(err) {
+              console.log("Fail the find deletefile error code : ",err);
+              callback(err);
+            }
+            else {
+              box_file_list.update({
+                user_id: user_id
+              }, {
+                $pull: {
+                  file_list: deletefile
+                }
+              }, function(err, output) {
+                if (err) callback("error : " + err);
+                else if (!output.n) callback('error: box_list not found');
+                else callback("success");
+              })
+            }
+          }
+        );
+      }
+    });
+  }
+
+  var createFolder = function(client, folderID, foldername, callback) {
+    client.folders.create(folderID, foldername, function(err, newfolder){
+      var folder = {
+        'id' : newfolder.id,
+        'name' : newfolder.name,
+        'mimeType' : newfolder.type,
+        'modifiedTime' : newfolder.modified_at,
+        'size' : newfolder.size,
+        'parents' : folderID
+      }
+      callback(folder);
+    });
   }
 
   var renameFile = function(client, fileId, newname){
@@ -186,9 +292,14 @@ module.exports = (function(){
   return {
     listAllFiles: listAllFiles,
     searchFilelist: searchFilelist,
+    refreshFilelist: refreshFilelist,
+    refreshToken: refreshToken,
     uploadFile: uploadFile,
+    uploadFileRest: uploadFileRest,
     downloadFile: downloadFile,
     deleteFile: deleteFile,
+    deleteFileRest: deleteFileRest,
+    createFolder: createFolder,
     renameFile: renameFile,
     renameFolder: renameFolder,
     moveFile: moveFile,
