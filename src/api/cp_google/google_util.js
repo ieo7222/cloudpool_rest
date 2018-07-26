@@ -323,7 +323,6 @@ var addFileList = function(oauth2Client,userId,folderId, CallBack){
         }
           console.log('탐색 id : rootId[0].root_id',);
         searchfilelist(userId,rootId[0].root_id,keyWord,orderKey,keyType, function(FileList){
-          console.log('넘어온거',FileList );
           FileList.unshift(rootId[0].root_id);
           CallBack(FileList);
         })
@@ -458,6 +457,56 @@ var addFileList = function(oauth2Client,userId,folderId, CallBack){
       });
     });
   }
+
+  var uploadFile = function(userId,newFile,callback){
+      google_file_list.find({"user_id":userId},{file_list:1,_id:0,} ,function(err, user){
+        var fileList=user[0].file_list;
+        fileList.push(newFile);
+        console.log("newFile");
+        google_file_list.update({
+            user_id: userId
+          }, {
+            $set: {
+              file_list: fileList
+            }
+          }, function(err, output) {
+            if (err) callback("error : " + err);
+            else callback("success");
+          });
+        })
+    }
+
+
+
+
+      //   async.map(user[0].file_list,function(file,callback1){
+      //     if(file.id== fileId) {
+      //         idx = user[0].file_list.indexOf(file);
+      //         callback1(null,'finished');
+      //       }
+      //     else{
+      //       callback1(null,'finished');
+      //     }
+      //   },function(err,result){
+      //     if(idx!=undefined){
+      //       fileList.splice(idx,1);
+
+      //       google_file_list.update({
+      //         user_id: userId
+      //       }, {
+      //         $set: {
+      //           file_list: fileList
+      //         }
+      //       }, function(err, output) {
+      //         if (err) callback("error : " + err);
+      //         else callback("success");
+      //       })
+      //     }
+      //     else{
+      //       callback("there is no file to delete");
+      //     }
+      // });
+    
   //   var updateFile = function(Newname, fileId,oauth2Client) {
   //   var drive = google.drive({
   //     version: 'v3',
@@ -489,8 +538,8 @@ var addFileList = function(oauth2Client,userId,folderId, CallBack){
     addFilelist:addFileList,
     refreshToken:refreshToken,
     reName:reName,
-    deleteFile:deleteFile
-    // uploadFile: uploadFile,
+    deleteFile:deleteFile,
+    uploadFile: uploadFile,
     // deleteFile: deleteFile,
     // updateFile: updateFile,
     // updateDir: updateDir,

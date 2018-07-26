@@ -82,6 +82,18 @@ module.exports = function(app)
         });      
       }
     });
+  });
+
+  app.post('/api/google/upload/', function(req, res){
+    console.log('rest api 라우터 진입 ');
+    var userId = req.body.userId;
+    var newFile = req.body.newFile;
+    console.log(req.body);
+
+    google_util.uploadFile(userId,newFile,function(result){
+      console.log('upload result : ',result);
+      res.json(result); 
+    });
   })
 
   // var data = { "userId" : userId , "fileId": fileId, "folderId" : folderId, "newName":newName};
