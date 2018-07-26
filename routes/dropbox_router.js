@@ -91,6 +91,7 @@ module.exports = function(app) {
     //accesstoken 몽고디비로부터 가져와야함
 
     dbxutil.refresh(user_id, folder, function(result) {
+      console.log(result);
       res.json(result);
     });
 
@@ -150,6 +151,7 @@ module.exports = function(app) {
 
   // GET ALL filelist
   app.post('/api/dropbox/check/', function(req, res) {
+    console.log(req.body);
     //classify the user_id
     var user_id = req.body.user_id;
     // if (err) return res.status(500).send({
@@ -441,7 +443,7 @@ module.exports = function(app) {
     }, function(err, list) {
       var Accesstoken = list.accesstoken;
       dbxutil.getThumbnail(Accesstoken, filepath, function(result){
-        
+
         res.json(result);
       })
 
