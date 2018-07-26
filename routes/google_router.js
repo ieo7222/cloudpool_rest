@@ -38,7 +38,7 @@ module.exports = function(app)
     var userId = '0000000001';
     // var userId = req.body.user_id;
     // var Accesstoken = req.body.accesstoken;
-    var Accesstoken = 'ya29.GlwEBgqcn3f5SvTWZYejVCjj9Nbx3TWmT03oz-iPK8rZh5VA5BODYm0zS5gcRnviWn-ONcuPW_V7MsJF3NtcnBtLe5r8OdXSvhsSCqjoI51zRtOyhvkCffynTg01JA';
+    var Accesstoken = 'ya29.GlwEBq-401ZCTRYnYBA9xdDt4WrnmU-MBGSFtl57_qX56kI7Z937vcUvOFsDSN0Ym6YFBtVdCC6VW28iJDus_Zmw3v63PnJzMIvDOqQ8aoNSa7M35Mt27j6lT_iiRw | 1/LVE4JYNp_lO0I2jQ6K46QElt4FAekg7Hl11hdEbYlBs';
     google_util.refreshToken(userId, Accesstoken, function(result){
       console.log('google refresh token result : '+result);
       res.json(result);
@@ -49,21 +49,34 @@ module.exports = function(app)
     console.log('rest api 라우터 진입 ');
     var userId = req.body.userId;
     var fileId = req.body.fileId;
-    var folderId = req.body.folderId;
     var newName = req.body.newName;
-    var Accesstoken = req.body.accesstoken;
-    var keyWord =req.body.keyWord;
-    var orderKey='type';
-    var keyType= req.body.keyType;
-    // accesstoken='ya29.GlwEBgqcn3f5SvTWZYejVCjj9Nbx3TWmT03oz-iPK8rZh5VA5BODYm0zS5gcRnviWn-ONcuPW_V7MsJF3NtcnBtLe5r8OdXSvhsSCqjoI51zRtOyhvkCffynTg01JA'
     google_file_list.find({"user_id":userId},{accesstoken:1,_id:0,} ,function(err, user){
       if(err){
         res.json('db error');
       }
       else{
         initGoogle(user[0].accesstoken,function(oauth2Client){
-          google_util.reName(userId,oauth2Client,fileId,folderId,newName,function(result){
+          google_util.reName(userId,oauth2Client,fileId,newName,function(result){
             console.log('rename result : ',result);
+            res.json(result); 
+          });
+        });      
+      }
+    });
+  })
+
+  app.post('/api/google/delete', function(req, res){
+    console.log('rest api 라우터 진입 ');
+    var userId = req.body.userId;
+    var fileId = req.body.fileId;
+    google_file_list.find({"user_id":userId},{accesstoken:1,_id:0,} ,function(err, user){
+      if(err){
+        res.json('db error');
+      }
+      else{
+        initGoogle(user[0].accesstoken,function(oauth2Client){
+          google_util.deleteFile(userId,oauth2Client,fileId,function(result){
+            console.log('delete result : ',result);
             res.json(result); 
           });
         });      

@@ -368,7 +368,7 @@ var addFileList = function(oauth2Client,userId,folderId, CallBack){
     });
   }
 
-  var reName =function(userId,oauth2Client,fileId,folderId,newName,callback){
+  var reName =function(userId,oauth2Client,fileId,newName,callback){
     var drive = google.drive({ version: 'v3', auth: oauth2Client});
     drive.files.update({
       fileId: fileId,
@@ -421,8 +421,43 @@ var addFileList = function(oauth2Client,userId,folderId, CallBack){
   });
 }
 
+  var deleteFile = function(userId,oauth2Client,fileId,callback){
+      var drive = google.drive({ version: 'v3',  auth: oauth2Client });
+      drive.files.delete({'fileId': fileId},function(err,file){
+        if(err) console.log(err);
+        var idx;
+        google_file_list.find({"user_id":userId},{file_list:1,_id:0,} ,function(err, user){
+          var fileList=user[0].file_list;
+          async.map(user[0].file_list,function(file,callback1){
+            if(file.id== fileId) {
+                idx = user[0].file_list.indexOf(file);
+                callback1(null,'finished');
+              }
+            else{
+              callback1(null,'finished');
+            }
+          },function(err,result){
+            if(idx!=undefined){
+              fileList.splice(idx,1);
 
-
+              google_file_list.update({
+                user_id: userId
+              }, {
+                $set: {
+                  file_list: fileList
+                }
+              }, function(err, output) {
+                if (err) callback("error : " + err);
+                else callback("success");
+              })
+            }
+            else{
+              callback("there is no file to delete");
+            }
+        });
+      });
+    });
+  }
   //   var updateFile = function(Newname, fileId,oauth2Client) {
   //   var drive = google.drive({
   //     version: 'v3',
@@ -453,7 +488,8 @@ var addFileList = function(oauth2Client,userId,folderId, CallBack){
     searchFilelist: searchFilelist,
     addFilelist:addFileList,
     refreshToken:refreshToken,
-    reName:reName
+    reName:reName,
+    deleteFile:deleteFile
     // uploadFile: uploadFile,
     // deleteFile: deleteFile,
     // updateFile: updateFile,
