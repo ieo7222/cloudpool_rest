@@ -106,8 +106,10 @@ module.exports = (function(){
 
   var uploadFile = function(client, FolderID, FileInfo, callback){
     var stream = fs.createReadStream(FileInfo.path);
-    client.files.uploadFile(FolderID, FileInfo.name, stream, function(err ,newfile){
-      if(err) console.log(err);
+    client.files.uploadFile(FolderID, FileInfo.name, stream, function(err, newfile){
+      if(err) {
+        callback(null);
+      }
       else{
         //파일 아이디
         console.log(newfile.entries[0].id);
@@ -211,15 +213,20 @@ module.exports = (function(){
 
   var createFolder = function(client, folderID, foldername, callback) {
     client.folders.create(folderID, foldername, function(err, newfolder){
-      var folder = {
-        'id' : newfolder.id,
-        'name' : newfolder.name,
-        'mimeType' : newfolder.type,
-        'modifiedTime' : newfolder.modified_at,
-        'size' : newfolder.size,
-        'parents' : folderID
+      if(err) {
+        callback(null);
       }
-      callback(folder);
+      else {
+        var folder = {
+          'id' : newfolder.id,
+          'name' : newfolder.name,
+          'mimeType' : newfolder.type,
+          'modifiedTime' : newfolder.modified_at,
+          'size' : newfolder.size,
+          'parents' : folderID
+        }
+        callback(folder);
+      }
     });
   }
 
@@ -261,23 +268,25 @@ module.exports = (function(){
   var movePath = function(client, fileId, pathId, callback){
     client.files.update(fileId, {parent : {id : pathId}}, function(err, updatedFile) {
       if(err) {
-        client.folders.update(fileId, {parent : {id : pathId}}, function(err, updatedFolder) {
-          if(err) {
-            console.log('moving path err : '+err);
-            callback(0, 'null');
-          } else {
-            var uploadfile = {
-              'id' : updatedFolder.id,
-              'name' : updatedFolder.name,
-              'mimeType' : updatedFolder.type,
-              'modifiedTime' : updatedFolder.modified_at,
-              'size' : updatedFolder.size,
-              'parents' : updatedFolder.parent.id
+        if(err.statusCode==409) callback(409, null);
+        else {
+          client.folders.update(fileId, {parent : {id : pathId}}, function(err, updatedFolder) {
+            if(err) {
+              if(err.statusCode==404) callback(404, null);
+            } else {
+              var uploadfile = {
+                'id' : updatedFolder.id,
+                'name' : updatedFolder.name,
+                'mimeType' : updatedFolder.type,
+                'modifiedTime' : updatedFolder.modified_at,
+                'size' : updatedFolder.size,
+                'parents' : updatedFolder.parent.id
+              }
+              console.log('moving folder completed');
+              callback(1, uploadfile);
             }
-            console.log('moving folder completed');
-            callback(1, uploadfile);
-          }
-      	});
+          });
+        }
       } else {
         var uploadfile = {
           'id' : updatedFile.id,

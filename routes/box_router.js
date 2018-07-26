@@ -139,9 +139,14 @@ module.exports = function(app)
         var Accesstoken = userlist.accesstoken;
         box_init(Accesstoken, function(client){
           box_util.uploadFile(client, folderID, FileInfo, function(uploadfile){
-            box_util.uploadFileRest(userID, uploadfile, function(result){
-              res.json(result);
-            });
+            if(uploadfile==null) {
+              res.json('업로드 실패: 해당 폴더에 동일한 이름이 존재합니다');
+            } else {
+              box_util.uploadFileRest(userID, uploadfile, function(result){
+                if(result=='success') res.json(FileInfo.name + " 업로드 완료");
+                else res.json(FileInfo.name + " 업로드 실패: "+result);
+              });
+            }
           });
         });
       });
@@ -176,9 +181,14 @@ module.exports = function(app)
         var Accesstoken = userlist.accesstoken;
         box_init(Accesstoken, function(client){
           box_util.createFolder(client, folderID, foldername, function(folder){
-            box_util.uploadFileRest(user_id, folder, function(result){
-              res.json(result);
-            });
+            if(folder==null) {
+              res.json('폴더 생성 실패: 해당 폴더에 동일한 이름이 존재합니다')
+            } else {
+              box_util.uploadFileRest(user_id, folder, function(result){
+                if(result=='success') res.json(result);
+                else res.json('폴더 생성 실패: '+result);
+              });
+            }
           });
         });
       });
@@ -194,7 +204,10 @@ module.exports = function(app)
         var Accesstoken = userlist.accesstoken;
         box_init(Accesstoken, function(client){
           box_util.renameFile(client, fileId, filename, function(result_rename, renamefile){
-            if(result_rename) {
+            if(!result_rename) {
+              res.json('이름 바꾸기 실패: 해당 폴더에 동일한 이름이 존재합니다')
+            }
+            else {
               box_util.deleteFileRest(userID, fileId, function(result_delete){
                 if(result_delete=='success'){
                   box_util.uploadFileRest(userID, renamefile, function(result_upload){
@@ -218,7 +231,12 @@ module.exports = function(app)
         var Accesstoken = userlist.accesstoken;
         box_init(Accesstoken, function(client){
           box_util.movePath(client, fileId, pathId, function(result_move, movefile){
-            if(result_move) {
+            if(result_move==404) {
+              res.json('경로 이동 실패: 해당 폴더를 찾을 수 없습니다');
+            } else if(result_move==409) {
+              res.json('경로 이동 실패: 해당 폴더에 동일한 이름이 존재합니다');
+            }
+            else {
               box_util.deleteFileRest(userID, fileId, function(result_delete){
                 if(result_delete=='success'){
                   box_util.uploadFileRest(userID, movefile, function(result_upload){
