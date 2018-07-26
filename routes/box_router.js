@@ -156,9 +156,11 @@ module.exports = function(app)
         var Accesstoken = userlist.accesstoken;
         box_init(Accesstoken, function(client){
           box_util.deleteFile(client, fileId, function(result){
-            box_util.deleteFileRest(userID, fileId, result, function(result_rest){
-              res.json(result_rest);
-            });
+            if(result) {
+              box_util.deleteFileRest(userID, fileId, function(result_rest){
+                res.json(result_rest);
+              });
+            }
           });
         });
       });
@@ -177,6 +179,54 @@ module.exports = function(app)
             box_util.uploadFileRest(user_id, folder, function(result){
               res.json(result);
             });
+          });
+        });
+      });
+    });
+
+    app.post('/api/box/rename', function(req, res) {
+      var userID = req.body.user_id;
+      var fileId = req.body.fileId;
+      var filename = req.body.filename;
+      box_file_list.findOne({
+        user_id: userID
+      }, function(err, userlist){
+        var Accesstoken = userlist.accesstoken;
+        box_init(Accesstoken, function(client){
+          box_util.renameFile(client, fileId, filename, function(result_rename, renamefile){
+            if(result_rename) {
+              box_util.deleteFileRest(userID, fileId, function(result_delete){
+                if(result_delete=='success'){
+                  box_util.uploadFileRest(userID, renamefile, function(result_upload){
+                    res.json(result_upload);
+                  });
+                }
+              });
+            }
+          });
+        });
+      });
+    });
+
+    app.post('/api/box/movepath', function(req, res) {
+      var userID = req.body.user_id;
+      var fileId = req.body.fileId;
+      var pathId = req.body.pathId;
+      box_file_list.findOne({
+        user_id: userID
+      }, function(err, userlist){
+        var Accesstoken = userlist.accesstoken;
+        box_init(Accesstoken, function(client){
+          box_util.movePath(client, fileId, pathId, function(result_move, movefile){
+            if(result_move) {
+              box_util.deleteFileRest(userID, fileId, function(result_delete){
+                if(result_delete=='success'){
+                  box_util.uploadFileRest(userID, movefile, function(result_upload){
+                    res.json(result_upload);
+                  });
+                }
+              });
+            }
           });
         });
       });

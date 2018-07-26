@@ -150,13 +150,25 @@ module.exports = (function(){
   }
 
   var deleteFile = function(client, fileId, callback){
-    client.files.delete(fileId).then(() => {
-      console.log('deletion succeeded');
-      callback(1);
+    client.files.delete(fileId, function(err) {
+      if(err) {
+        client.folders.delete(fileId, {recursive:true}, function(err_folder) {
+          if(err_folder) {
+            console.log('deletion err : '+err_folder);
+            callback(0);
+          } else {
+            console.log('folder deletion succeeded');
+            callback(1);
+          }
+        });
+      } else {
+        console.log('file deletion succeeded');
+        callback(1);
+      }
     });
   }
 
-  var deleteFileRest = function(user_id, fileId, result, callback){
+  var deleteFileRest = function(user_id, fileId, callback){
     var Option={
       "user_id":user_id
     }
@@ -211,31 +223,73 @@ module.exports = (function(){
     });
   }
 
-  var renameFile = function(client, fileId, newname){
-    client.files.update(fileId, {name : newname})
-  	.then(updatedFile => {
-  		console.log('renaming file completed');
+  var renameFile = function(client, fileId, newname, callback){
+    client.files.update(fileId, {name : newname}, function(err, updatedFile) {
+      if(err) {
+        client.folders.update(fileId, {name : newname}, function(err, updatedFolder) {
+          if(err) {
+            console.log('renaming err : '+err);
+            callback(0, 'null');
+          } else {
+            var uploadfile = {
+              'id' : updatedFolder.id,
+              'name' : updatedFolder.name,
+              'mimeType' : updatedFolder.type,
+              'modifiedTime' : updatedFolder.modified_at,
+              'size' : updatedFolder.size,
+              'parents' : updatedFolder.parent.id
+            }
+            console.log('renaming folder completed');
+            callback(1, uploadfile);
+          }
+      	});
+      } else {
+        var uploadfile = {
+          'id' : updatedFile.id,
+          'name' : updatedFile.name,
+          'mimeType' : updatedFile.type,
+          'modifiedTime' : updatedFile.modified_at,
+          'size' : updatedFile.size,
+          'parents' : updatedFile.parent.id
+        }
+        console.log('renaming file completed');
+        callback(1, uploadfile);
+      }
   	});
   }
 
-  var renameFolder = function(client, folderId, newname){
-    client.folders.update(folderId, {name : newname})
-  	.then(updatedFolder  => {
-  		console.log('renaming folder completed');
-  	});
-  }
-
-  var moveFile = function(client, fileId, parentId){
-    client.files.update(fileId, {parent : {id : parentId}})
-  	.then(updatedFile => {
-  		console.log('moving file completed');
-  	});
-  }
-
-  var moveFolder = function(client, folderId, parentId){
-    client.folders.update(folderId, {parent : {id : parentId}})
-  	.then(updatedFolder => {
-  		console.log('moving folder completed');
+  var movePath = function(client, fileId, pathId, callback){
+    client.files.update(fileId, {parent : {id : pathId}}, function(err, updatedFile) {
+      if(err) {
+        client.folders.update(fileId, {parent : {id : pathId}}, function(err, updatedFolder) {
+          if(err) {
+            console.log('moving path err : '+err);
+            callback(0, 'null');
+          } else {
+            var uploadfile = {
+              'id' : updatedFolder.id,
+              'name' : updatedFolder.name,
+              'mimeType' : updatedFolder.type,
+              'modifiedTime' : updatedFolder.modified_at,
+              'size' : updatedFolder.size,
+              'parents' : updatedFolder.parent.id
+            }
+            console.log('moving folder completed');
+            callback(1, uploadfile);
+          }
+      	});
+      } else {
+        var uploadfile = {
+          'id' : updatedFile.id,
+          'name' : updatedFile.name,
+          'mimeType' : updatedFile.type,
+          'modifiedTime' : updatedFile.modified_at,
+          'size' : updatedFile.size,
+          'parents' : updatedFile.parent.id
+        }
+        console.log('moving file completed');
+        callback(1, uploadfile);
+      }
   	});
   }
 
@@ -301,9 +355,7 @@ module.exports = (function(){
     deleteFileRest: deleteFileRest,
     createFolder: createFolder,
     renameFile: renameFile,
-    renameFolder: renameFolder,
-    moveFile: moveFile,
-    moveFolder: moveFolder,
+    movePath: movePath,
     thumbnail: thumbnail,
     search: search
   }
