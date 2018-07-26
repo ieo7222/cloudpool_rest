@@ -9,15 +9,12 @@ var initDropbox = require('./dropbox_init'),
   var buffer = require('buffer');
 
   var query = {
-    "entries":[
-      {
+    // "entries":[
+      // {
         // "path": '/tes2.ppt'
-        "path": '/test.jpg',
-        "format": "jpeg",
-        "size": "w64h64",
-        "mode": "strict"
-      }
-    ]
+        "path": '/test.ppt'
+      // }
+    // ]
   };
 // initDropbox('kFb_ENWtmyUAAAAAAAABe1Megz31l_Y8uYpKU5MVb5A7fPH76XRzzpfhj-gPwHVz', function(dbx){
 //   dbx.filesGetThumbnail({path : '/test.jpg'})
@@ -29,30 +26,28 @@ var initDropbox = require('./dropbox_init'),
 // })
   //
   var data = JSON.stringify(query);
+  function btoa(str) {
+    if (Buffer.byteLength(str) !== str.length)
+      throw new Error('bad string!');
+    return Buffer(str, 'binary').toString('base64');
+  }
   var headers = {
     'Authorization': 'Bearer kFb_ENWtmyUAAAAAAAABe1Megz31l_Y8uYpKU5MVb5A7fPH76XRzzpfhj-gPwHVz',
-    'Content-Type': 'application/json'
+    'Dropbox-API-Arg': data
   };
   request.post({
       // url: 'https://content.dropboxapi.com/2/files/get_preview',
-      url: 'https://content.dropboxapi.com/2/files/get_thumbnail_batch',
-      headers: headers,
-      body : data
+      url: 'https://content.dropboxapi.com/2/files/get_preview',
+      headers: headers
     },
     function(error, response, body) {
       if (error) {
 
       } else {
         console.log("====================================================");
-        var body = JSON.parse(response.body);
-        console.log(body.entries[0].thumbnail);
-        // var data = response.body.replace(/^data:image\/\w+;base64,/, "");
-        // var buf = new Buffer(data, 'base64');
-        // fs.writeFile('image.jpeg', buf);
-        // // 버퍼의 파일을 쓰기
-        // // fs.writeFile(response.body,'./copy.jpg');
-        // console.log('******** base64로 인코딩되었던 파일 쓰기 성공 ********');
-        // // decode_base64(body,'rane.jpg');
+        console.log(Buffer.from("Hello World").toString('base64'));
+        // console.log(Buffer.from(response.body).toString('base64'));
+
       }
     }
   );
