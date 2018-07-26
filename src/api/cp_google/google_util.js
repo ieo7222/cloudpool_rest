@@ -230,8 +230,7 @@ var addFileList = function(oauth2Client,userId,folderId, CallBack){
                   if(folderId!=undefined&&file.parents==folderId){
                     console.log(file.parents==folderId);
                     //folder 클릭에 의한 list
-                    if(file.mimeType=='application/vnd.google-apps.folder') filteredList.unshift(file);
-                    else filteredList.push(file);
+                    filteredList.push(file);
                   }
                   else if(folderId==undefined){
                     //검색 or 카테고리클릭에 의한 list
@@ -301,14 +300,22 @@ var addFileList = function(oauth2Client,userId,folderId, CallBack){
                       callback(filteredList);
                       // console.log(filteredList);
                       console.log('finished2');
+
                   }
               });
               
         }
       });
     }
-    // filteredList.unshift('0AGCP8EhCswtnUk9PVA');
-    if(folderId=='root'){
+    if(folderId==undefined){
+      google_file_list.find({"user_id":userId},{root_id:1,_id:0,} ,function(err, user){
+        searchfilelist(userId,folderId,keyWord,orderKey,keyType, function(FileList){
+          FileList.unshift(user[0].root_id);
+          CallBack(FileList);
+        });
+      });
+    }
+    else if(folderId=='root'){
       console.log('folder id is root');
       google_file_list.find({"user_id":userId},{root_id:1,_id:0,} ,function(err, rootId){
         if(err){
@@ -348,12 +355,105 @@ var addFileList = function(oauth2Client,userId,folderId, CallBack){
 
 }
 
+  var refreshToken = function(user_id, accesstoken, callback){
+    google_file_list.update({
+      user_id: user_id
+    }, {
+      $set: {
+        accesstoken: accesstoken
+      }
+    }, function(err, output) {
+      if (err) callback("error : " + err);
+      else callback("success");
+    });
+  }
+
+  var reName =function(userId,oauth2Client,fileId,folderId,newName,callback){
+    var drive = google.drive({ version: 'v3', auth: oauth2Client});
+    drive.files.update({
+      fileId: fileId,
+      resource: {
+        "name": newName
+      }
+    }, (err, file) => {
+      if (err) {
+        console.log('The API returned an error: ' + err);
+        return;
+      } else {
+        console.log('file.data',file.data);
+        var newFile = file.data;
+        var idx;
+        google_file_list.find({"user_id":userId},{file_list:1,_id:0,} ,function(err, user){
+          var fileList=user[0].file_list;
+          async.map(user[0].file_list,function(file,callback1){
+            if(file.id== fileId) {
+                idx = user[0].file_list.indexOf(file);
+                callback1(null,'finished');
+              }
+            else{
+              callback1(null,'finished');
+            }
+          },function(err,result){
+            if(idx!=undefined){
+              var tempFile=fileList[idx];
+              tempFile.name=newFile.name;
+              fileList.splice(idx,1);
+              fileList.push(tempFile);
+    
+              google_file_list.update({
+                user_id: userId
+              }, {
+                $set: {
+                  file_list: fileList
+                }
+              }, function(err, output) {
+                if (err) callback("error : " + err);
+                else callback("success");
+              })
+            }
+            else{
+              callback("there is no file");
+            }
+        });
+      });
+      
+    }
+  });
+}
+
+
+
+  //   var updateFile = function(Newname, fileId,oauth2Client) {
+  //   var drive = google.drive({
+  //     version: 'v3',
+  //     auth: oauth2Client
+  //   });
+
+  //   drive.files.update({
+  //     fileId: fileId,
+  //     resource: {
+  //       "name": Newname
+  //     }
+  //   }, (err, file) => {
+  //     if (err) {
+  //       console.log('The API returned an error: ' + err);
+  //       return;
+  //     } else {
+  //       console.log(file.data);
+  //     }
+  //   });
+
+  //   console.log("name completely changed!");
+  //   // res.redirect('google/rootroot);
+  // }
 
 
   return {
     setFilelist: setFilelist,
     searchFilelist: searchFilelist,
-    addFilelist:addFileList
+    addFilelist:addFileList,
+    refreshToken:refreshToken,
+    reName:reName
     // uploadFile: uploadFile,
     // deleteFile: deleteFile,
     // updateFile: updateFile,
