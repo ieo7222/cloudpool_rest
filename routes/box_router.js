@@ -41,7 +41,13 @@ module.exports = function(app)
       var userId=req.body.user_id;
       var folderId =req.body.folderID;
       box_util.searchForFolderId(userId,folderId,function(fileList){
-        res.json({list: fileList});
+        box_util.findFolderPath(userId,folderId,function(folderPath, pathname){
+          res.json({
+            list: fileList,
+            path: folderPath,
+            pathname: pathname
+          });
+        })
       });
     });
 

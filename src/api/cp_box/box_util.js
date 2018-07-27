@@ -60,6 +60,54 @@ module.exports = (function(){
       });
     }
 
+  var findFolderPath = function(userId, folderId, callback){
+    var Option={
+      "user_id":userId
+    }
+    box_file_list.find(Option,{file_list:1,_id:0} ,function(err, userlist){
+      if(err){
+        console.log("db Find method error : ",err);
+        callback(null);
+      }
+      else if(userlist[0]==null) {
+        console.log('filelist are saving...');
+        callback(null);
+      }
+      else {
+        var folderpath =[];
+        var pathname=[];
+        if(folderId==0){
+          folderpath.push(folderId);
+          pathname.push('Box');
+        }
+        async.map(userlist[0].file_list,
+          function(file,callback_list){
+            if(file.id==folderId) {
+              folderpath.push(file.id);
+              pathname.push(file.name);
+              findFolderPath(userId, file.parents, function(folderpath_child, pathname_child){
+                folderpath = folderpath.concat(folderpath_child);
+                pathname = pathname.concat(pathname_child);
+                callback_list(null);
+              })
+            } else {
+              callback_list(null);
+            }
+          },
+          function(err,result){
+            if(err) {
+              console.log("box_util findFolderPath err : "+err);
+              callback(null);
+            }
+            else {
+              callback(folderpath, pathname);
+            }
+          }
+        );
+      }
+    });
+  }
+
   var searchForFolderId = function (userId, folderId, callback){
     var Option={
       "user_id":userId
@@ -448,6 +496,7 @@ module.exports = (function(){
 
   return {
     listAllFiles: listAllFiles,
+    findFolderPath: findFolderPath,
     searchForFolderId: searchForFolderId,
     searchForContent: searchForContent,
     searchForSelectType: searchForSelectType,
