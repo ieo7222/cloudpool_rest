@@ -36,7 +36,7 @@ module.exports = (function(){
       });
     }
 
-  var searchFilelist = function (userId, folderId, callback){
+  var searchForFolderId = function (userId, folderId, callback){
     var Option={
       "user_id":userId
     }
@@ -57,6 +57,43 @@ module.exports = (function(){
               filteredList.push(beforeFolder);
             }
             else if(file.parents==folderId){
+              filteredList.push(file);
+            }
+            callback_list(null);
+          },
+          function(err,result){
+            if(err) {
+              console.log("Fail the Folder list error code : ",err);
+              callback(null);
+            }
+            else {
+              callback(filteredList);
+            }
+          }
+        );
+      }
+    });
+  }
+
+  var searchForContent = function (userId, content, callback){
+    var Option={
+      "user_id":userId
+    }
+    box_file_list.find(Option,{file_list:1,_id:0} ,function(err, userlist){
+      if(err){
+        console.log("db Find method error : ",err);
+      }
+      else{
+        var filteredList =[];
+        var beforeFolder = {
+          'id' : 0,
+          'name' : '..',
+          'mimeType' : 'folder'
+        }
+        filteredList.push(beforeFolder);
+        async.map(userlist[0].file_list,
+          function(file,callback_list){
+            if(file.name.indexOf(content) != -1){
               filteredList.push(file);
             }
             callback_list(null);
@@ -320,41 +357,11 @@ module.exports = (function(){
   	});
   }
 
-  var search = function(client, searchText, callback){
-    client.search.query(
-  	searchText,
-  	{
-  		//restriction
-  	})
-  	.then(results => {
-      var filelist = [];
-      async.map(results.entries, function(item, callback_list){
-        var iteminfo={
-          'id' : item.id,
-          'name' : item.name,
-          'mimeType' : item.type,
-          'modifiedTime' : item.modified_at,
-          'size' : item.size
-        };
-        filelist.push(iteminfo);
-        callback_list(null, 'finish');
-      },
-      function(err,result){
-        if(err) console.log(err);
-        //list 받아오기 완료
-        else {
-          console.log('Finish the File list');
-          callback(filelist);
-        }
-
-      });
-  	});
-  }
-
 
   return {
     listAllFiles: listAllFiles,
-    searchFilelist: searchFilelist,
+    searchForFolderId: searchForFolderId,
+    searchForContent: searchForContent,
     refreshFilelist: refreshFilelist,
     refreshToken: refreshToken,
     uploadFile: uploadFile,
@@ -365,8 +372,7 @@ module.exports = (function(){
     createFolder: createFolder,
     renameFile: renameFile,
     movePath: movePath,
-    thumbnail: thumbnail,
-    search: search
+    thumbnail: thumbnail
   }
 
 })();

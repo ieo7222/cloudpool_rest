@@ -40,7 +40,7 @@ module.exports = function(app)
     app.post('/api/box/check/', function(req, res){
       var userId=req.body.user_id;
       var folderId =req.body.folderID;
-      box_util.searchFilelist(userId,folderId,function(fileList){
+      box_util.searchForFolderId(userId,folderId,function(fileList){
         res.json({list: fileList});
       });
     });
@@ -247,6 +247,14 @@ module.exports = function(app)
             }
           });
         });
+      });
+    });
+
+    app.post('/api/box/search/', function(req, res){
+      var userId=req.body.user_id;
+      var content =req.body.content;
+      box_util.searchForContent(userId,content,function(fileList){
+        res.json({list: fileList});
       });
     });
 }
