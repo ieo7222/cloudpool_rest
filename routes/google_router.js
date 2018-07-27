@@ -26,6 +26,23 @@ module.exports = function(app)
       res.json({result: result});
     });
   });
+
+  app.post('/api/google/refresh/list/', function(req, res){
+    var userId = req.body.userId;
+    google_file_list.find({"user_id":userId},{accesstoken:1,_id:0,} ,function(err, user){
+      if(err){
+        res.json('db error');
+      }
+      else{
+        initGoogle(user[0].accesstoken,function(oauth2Client){
+          google_util.setFilelist(user[0].accesstoken, oauth2Client,userId,function(result){
+            console.log('refresh result : ',result);
+            res.json(result); 
+          });
+        });      
+      }
+    });
+  });
   
   app.post('/api/google/check/', function(req, res){
     var keyWord =req.body.keyWord;
@@ -43,7 +60,7 @@ module.exports = function(app)
     var userId = '0000000001';
     // var userId = req.body.user_id;
     // var Accesstoken = req.body.accesstoken;
-    var Accesstoken = 'ya29.GlwFBu4u-17-lc49rV8pea3cga9otQl77pnVBND7do2XGKXZpUNoNUPyI1qztMqbGNjZDH1Jor-l7sEs8Qus1mI22NvY4coy5BTtXnYun5uUAbZaM4hzLFUs_jK3rQ';
+    var Accesstoken = ' ya29.GlsFBmT8krcZePQaytMF5guCO1Hjm1RtqotPDceU0-bKcXTVUEsojxt8eokzCeaZH54W454VypR2Qny7RukSVs8pp_RqcZ4_Tx_VXR8sjXWlCrkUaFpuPcreeWZr';
     google_util.refreshToken(userId, Accesstoken, function(result){
       console.log('google refresh token result : '+result);
       res.json(result);
