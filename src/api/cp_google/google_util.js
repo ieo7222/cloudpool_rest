@@ -273,12 +273,12 @@ var addFileList = function(oauth2Client,userId,folderId, CallBack){
                       filteredList.push(file);
                     }
                   }
-                  callback_list(null);
+                  callback_list();
                 },
               function(err,result){
                   if(err) {
                     console.log("Fail the Folder list error code : ",err);
-                    callback(null);
+                    callback();
                   }
                   else {                  
                     console.log('Finished Filtering');
@@ -344,10 +344,15 @@ var addFileList = function(oauth2Client,userId,folderId, CallBack){
             callback4();
           }
         },function(err,result){
-          searchfilelist(userId,folderId,keyWord,orderKey,keyType, function(FileList){
-            FileList.unshift(upperDirId);
-            CallBack(FileList);
-          })
+          if(err){
+            CallBack();
+          }
+          else{
+            searchfilelist(userId,folderId,keyWord,orderKey,keyType, function(FileList){
+              FileList.unshift(upperDirId);
+              CallBack(FileList);
+            })
+          }
         });
       });
     }
@@ -458,6 +463,34 @@ var addFileList = function(oauth2Client,userId,folderId, CallBack){
     });
   }
 
+  var downloadFile = function(userId,fileId,callback){
+    google_file_list.find({"user_id":userId},{file_list:1,_id:0,} ,function(err, user){
+      var fileList=user[0].file_list;
+      var name;
+      var mimeType;
+
+      async.map(user[0].file_list,function(file,callback1){
+        if(file.id== fileId) {
+            name = file.name;
+            mimeType = file.mimeType;
+            callback1(null,'finished');
+          }
+        else{
+          callback1(null,'finished');
+        }
+      },function(err,result){
+        if (err) callback("error : " + err);
+        else{
+          var data = {
+            "name" : name ,
+            "mimeType": mimeType
+          }
+          callback(data);
+        }
+    });
+  });
+}
+
   var uploadFile = function(userId,newFile,callback){
       google_file_list.find({"user_id":userId},{file_list:1,_id:0,} ,function(err, user){
         var fileList=user[0].file_list;
@@ -539,6 +572,17 @@ var addFileList = function(oauth2Client,userId,folderId, CallBack){
         }
       });
     }
+    
+    var deleteUserData=function(userId,callback){
+      google_file_list.remove({"user_id":userId} ,function(err, result){
+        if(err){
+          callback(err);
+        }
+        else{
+          callback('successfully removed');
+        }
+      });
+    }
 
 
       //   async.map(user[0].file_list,function(file,callback1){
@@ -602,7 +646,9 @@ var addFileList = function(oauth2Client,userId,folderId, CallBack){
     reName:reName,
     deleteFile:deleteFile,
     uploadFile: uploadFile,
-    moveDir:moveDir
+    moveDir:moveDir,
+    downloadFile:downloadFile,
+    deleteUserData:deleteUserData
     // deleteFile: deleteFile,
     // updateFile: updateFile,
     // updateDir: updateDir,

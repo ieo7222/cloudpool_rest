@@ -10,14 +10,20 @@ module.exports = function(app)
   }));
 
   app.post('/api/google/set/', function(req, res){
-    console.time('alpha');
     var Accesstoken = req.body.CP_love;
     var userId =req.body.userId;
     initGoogle(Accesstoken,function(oauth2Client){
       google_util.setFilelist(Accesstoken, oauth2Client,userId, function(result){
-        console.timeEnd('alpha');
         res.json({result: result});
         });
+    });
+  });
+
+  app.post('/api/google/relieve/', function(req, res){
+    // var Accesstoken = req.body.CP_love;
+    var userId =req.body.userId;
+    google_util.deleteUserData(userId, function(result){
+      res.json({result: result});
     });
   });
   
@@ -27,7 +33,6 @@ module.exports = function(app)
     var keyType= req.body.keyType;
     var folderId=req.body.folderId;
     var userId=req.body.userId;
-    console.log(req.body);
     google_util.searchFilelist(userId,folderId,keyWord,orderKey,keyType,function(fileList){
       res.json(JSON.stringify(fileList));
     });
@@ -95,6 +100,18 @@ module.exports = function(app)
       res.json(result); 
     });
   })
+
+  app.post('/api/google/download/', function(req, res){
+    console.log('rest api 라우터 진입 ');
+    var userId = req.body.userId;
+    var fileId = req.body.fileId;
+    console.log(req.body);
+    google_util.downloadFile(userId,fileId,function(result){
+      console.log('download result : ',result);
+      res.json(result); 
+    });
+  })
+
 
   app.post('/api/google/mvdir/', function(req, res){
     console.log('rest api 라우터 진입 ');
