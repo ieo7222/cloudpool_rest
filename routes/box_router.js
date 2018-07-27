@@ -260,7 +260,13 @@ module.exports = function(app)
       var userId=req.body.user_id;
       var content =req.body.content;
       box_util.searchForContent(userId,content,function(fileList){
-        res.json({list: fileList});
+        box_util.findFolderPath(userId,0,function(folderPath, pathname){
+          res.json({
+            list: fileList,
+            path: folderPath,
+            pathname: pathname
+          });
+        })
       });
     });
 
@@ -268,7 +274,13 @@ module.exports = function(app)
       var userId=req.body.user_id;
       var selecttype =req.body.selecttype;
       box_util.searchForSelectType(userId,selecttype,function(fileList){
-        res.json({list: fileList});
+        box_util.findFolderPath(userId,0,function(folderPath, pathname){
+          res.json({
+            list: fileList,
+            path: folderPath,
+            pathname: pathname
+          });
+        })
       });
     });
 }
