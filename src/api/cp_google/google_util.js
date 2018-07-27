@@ -105,10 +105,59 @@ module.exports = (function() {
 
   }
 
-  var deleteUserData=function(userId,callback){
+  var getBreadCrumbs=function(userId,folderId,callback){
+    var recurGetParents = function(folderId,rootId,fileList,callback2){
+      var tempArr=[];
+      var tempNameArr=[];
+      var parentId;
+      var folderName;
+      async.map(fileList,function(file,callback3){
+        if(file.id==folderId){
+          parentId  = file.parents[0];
+          folderName =file.name;
+          callback3();
+        }
+        else{
+          callback3();
+        }
+      },function(err,result){
+        if(err){
+          console.log('recurGetParents function error');
+        }
+        else{
+          if(parentId==rootId){
+            tempArr.push(parentId);
+            tempArr.push(folderId);
+            tempNameArr.push('Google');
+            tempNameArr.push(folderName);
+            callback2(tempArr,tempNameArr);
+          }
+          else{
+            recurGetParents(parentId,rootId,fileList,function(upperList,upperNameList){
+              tempArr=tempArr.concat(upperList);
+              tempArr.push(folderId);
+              tempNameArr = tempNameArr.concat(upperNameList);
+              tempNameArr.push(folderName);
+              callback2(tempArr,tempNameArr);
+            });
+          }
+        }
+      });
+    }
 
+    google_file_list.find({"user_id":userId},{file_list:1,root_id:1,_id:0} ,function(err, user){
+      if(folderId=='root'||folderId==user[0].root_id) {
+        callback(['root'],['Google']);
+      }
+      else{
+        recurGetParents(folderId,user[0].root_id,user[0].file_list,function(resultList,resultNameList){
+          console.log(resultList);
+          console.log(resultNameList);
+          callback(resultList,resultNameList);
+        })
+      }
+    });
   }
-
 
 
 //   var addlist = function(oauth2Client,userId,Fdepth, callbackResult){
@@ -659,7 +708,8 @@ module.exports = (function() {
     uploadFile: uploadFile,
     moveDir:moveDir,
     downloadFile:downloadFile,
-    deleteUserData:deleteUserData
+    deleteUserData:deleteUserData,
+    getBreadCrumbs:getBreadCrumbs
     // deleteFile: deleteFile,
     // updateFile: updateFile,
     // updateDir: updateDir,

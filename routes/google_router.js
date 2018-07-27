@@ -44,6 +44,19 @@ module.exports = function(app)
     });
   });
   
+  app.post('/api/google/getBreadCrumbs/', function(req, res){
+    var userId=req.body.userId;
+    var folderId=req.body.folderId;
+    console.log('folderId',folderId);
+    google_util.getBreadCrumbs(userId,folderId,function(fileList,fileNameList){
+      var FileList=[];
+      FileList.push(fileList);
+      FileList.push(fileNameList);
+      res.json(JSON.stringify(FileList));
+    });
+  });
+
+
   app.post('/api/google/check/', function(req, res){
     var keyWord =req.body.keyWord;
     var orderKey='type';
