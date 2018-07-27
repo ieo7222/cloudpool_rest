@@ -476,7 +476,69 @@ var addFileList = function(oauth2Client,userId,folderId, CallBack){
         })
     }
 
+    var moveDir = function(userId,oauth2Client,fileId,folderId,CurfolderId,callback){
+      var drive = google.drive({
+        version: 'v3',
+        auth: oauth2Client
+      });
 
+      var Parents=[];
+      Parents.push(CurfolderId);
+      var previousParents = Parents.join(',');
+      console.log('previous Parents : ', previousParents);
+      drive.files.update({
+        fileId: fileId,
+        addParents: folderId,
+        removeParents: previousParents,
+        fields: 'id, name'
+      }, function(err, res) {
+        if (err) {
+          // Handle error
+        } else {
+          console.log('################이동한 파일 :', res.data,'################');
+          var newFile = res.data;
+          var idx;
+          google_file_list.find({"user_id":userId},{file_list:1,_id:0,} ,function(err, user){
+            var fileList=user[0].file_list;
+            async.map(user[0].file_list,function(file,callback1){
+              if(file.id== fileId) {
+                  idx = user[0].file_list.indexOf(file);
+                  console.log('idx: ',idx);
+                  callback1(null,'finished');
+                }
+              else{
+                callback1(null,'finished');
+              }
+            },function(err,result){
+              if(idx!=undefined){
+                var tempFile=fileList[idx];
+                console.log('temp file: ',tempFile);
+                tempFile.parents=folderId;
+                console.log('바뀐후: ',tempFile);
+                fileList.splice(idx,1);
+                fileList.push(tempFile);
+      
+                google_file_list.update({
+                  user_id: userId
+                }, {
+                  $set: {
+                    file_list: fileList
+                  }
+                }, function(err, output) {
+                  if (err) callback("error : " + err);
+                  else callback("success");
+                })
+              }
+              else{
+                callback("there is no file");
+              }
+          });
+        });
+
+          // File moved.
+        }
+      });
+    }
 
 
       //   async.map(user[0].file_list,function(file,callback1){
@@ -540,6 +602,7 @@ var addFileList = function(oauth2Client,userId,folderId, CallBack){
     reName:reName,
     deleteFile:deleteFile,
     uploadFile: uploadFile,
+    moveDir:moveDir
     // deleteFile: deleteFile,
     // updateFile: updateFile,
     // updateDir: updateDir,

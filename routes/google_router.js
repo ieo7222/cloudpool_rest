@@ -38,7 +38,7 @@ module.exports = function(app)
     var userId = '0000000001';
     // var userId = req.body.user_id;
     // var Accesstoken = req.body.accesstoken;
-    var Accesstoken = 'ya29.GlwEBq-401ZCTRYnYBA9xdDt4WrnmU-MBGSFtl57_qX56kI7Z937vcUvOFsDSN0Ym6YFBtVdCC6VW28iJDus_Zmw3v63PnJzMIvDOqQ8aoNSa7M35Mt27j6lT_iiRw | 1/LVE4JYNp_lO0I2jQ6K46QElt4FAekg7Hl11hdEbYlBs';
+    var Accesstoken = 'ya29.GlwFBu4u-17-lc49rV8pea3cga9otQl77pnVBND7do2XGKXZpUNoNUPyI1qztMqbGNjZDH1Jor-l7sEs8Qus1mI22NvY4coy5BTtXnYun5uUAbZaM4hzLFUs_jK3rQ';
     google_util.refreshToken(userId, Accesstoken, function(result){
       console.log('google refresh token result : '+result);
       res.json(result);
@@ -95,6 +95,33 @@ module.exports = function(app)
       res.json(result); 
     });
   })
+
+  app.post('/api/google/mvdir/', function(req, res){
+    console.log('rest api 라우터 진입 ');
+    console.log(req.body);
+    var userId = req.body.userId;
+    var fileId = req.body.fileId;
+    var folderId = req.body.folderId;
+    var CurfolderId = req.body.CurfolderId;
+    
+    if(fileId!=undefined&&folderId!=undefined){
+      google_file_list.find({"user_id":userId},{accesstoken:1,_id:0,} ,function(err, user){
+        if(err){
+          res.json('db error');
+        }
+        else{
+          initGoogle(user[0].accesstoken,function(oauth2Client){
+            google_util.moveDir(userId,oauth2Client,fileId,folderId,CurfolderId,function(result){
+              console.log('rename result : ',result);
+              res.json(result); 
+            });
+          });      
+        }
+      });
+    }
+  })
+
+
 
   // var data = { "userId" : userId , "fileId": fileId, "folderId" : folderId, "newName":newName};
   // request.post({
