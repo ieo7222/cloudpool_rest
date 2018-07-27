@@ -9,7 +9,6 @@ var google_file_list = new Schema({
   root_id : String,
   check_time : { type: String , default: Date.now  },
   file_list: Array,
-  max_depth: Number
 });
 
 module.exports = mongoose.model('google_file_list', google_file_list);
