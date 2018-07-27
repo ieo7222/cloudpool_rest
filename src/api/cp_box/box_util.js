@@ -15,7 +15,7 @@ module.exports = (function(){
           var iteminfo = {
             'id' : item.id,
             'name' : item.name,
-            'mimeType' : item.type,
+            'type' : item.type,
             'modifiedTime' : item.modified_at,
             'size' : item.size,
             'parents' : folderId
@@ -43,8 +43,13 @@ module.exports = (function(){
     box_file_list.find(Option,{file_list:1,_id:0} ,function(err, userlist){
       if(err){
         console.log("db Find method error : ",err);
+        callback(null);
       }
-      else{
+      else if(userlist[0]==null) {
+        console.log('filelist are saving...');
+        callback(null);
+      }
+      else {
         var filteredList =[];
         async.map(userlist[0].file_list,
           function(file,callback_list){
@@ -52,7 +57,7 @@ module.exports = (function(){
               var beforeFolder = {
                 'id' : file.parents,
                 'name' : '..',
-                'mimeType' : 'folder'
+                'type' : 'folder'
               }
               filteredList.push(beforeFolder);
             }
@@ -88,7 +93,7 @@ module.exports = (function(){
         var beforeFolder = {
           'id' : 0,
           'name' : '..',
-          'mimeType' : 'folder'
+          'type' : 'folder'
         }
         filteredList.push(beforeFolder);
         async.map(userlist[0].file_list,
@@ -153,7 +158,7 @@ module.exports = (function(){
         var uploadfile = {
           'id' : newfile.entries[0].id,
           'name' : newfile.entries[0].name,
-          'mimeType' : newfile.entries[0].type,
+          'type' : newfile.entries[0].type,
           'modifiedTime' : newfile.entries[0].modified_at,
           'size' : newfile.entries[0].size,
           'parents' : FolderID
@@ -257,7 +262,7 @@ module.exports = (function(){
         var folder = {
           'id' : newfolder.id,
           'name' : newfolder.name,
-          'mimeType' : newfolder.type,
+          'type' : newfolder.type,
           'modifiedTime' : newfolder.modified_at,
           'size' : newfolder.size,
           'parents' : folderID
@@ -278,7 +283,7 @@ module.exports = (function(){
             var uploadfile = {
               'id' : updatedFolder.id,
               'name' : updatedFolder.name,
-              'mimeType' : updatedFolder.type,
+              'type' : updatedFolder.type,
               'modifiedTime' : updatedFolder.modified_at,
               'size' : updatedFolder.size,
               'parents' : updatedFolder.parent.id
@@ -291,7 +296,7 @@ module.exports = (function(){
         var uploadfile = {
           'id' : updatedFile.id,
           'name' : updatedFile.name,
-          'mimeType' : updatedFile.type,
+          'type' : updatedFile.type,
           'modifiedTime' : updatedFile.modified_at,
           'size' : updatedFile.size,
           'parents' : updatedFile.parent.id
@@ -314,7 +319,7 @@ module.exports = (function(){
               var uploadfile = {
                 'id' : updatedFolder.id,
                 'name' : updatedFolder.name,
-                'mimeType' : updatedFolder.type,
+                'type' : updatedFolder.type,
                 'modifiedTime' : updatedFolder.modified_at,
                 'size' : updatedFolder.size,
                 'parents' : updatedFolder.parent.id
@@ -328,7 +333,7 @@ module.exports = (function(){
         var uploadfile = {
           'id' : updatedFile.id,
           'name' : updatedFile.name,
-          'mimeType' : updatedFile.type,
+          'type' : updatedFile.type,
           'modifiedTime' : updatedFile.modified_at,
           'size' : updatedFile.size,
           'parents' : updatedFile.parent.id
