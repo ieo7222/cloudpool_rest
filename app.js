@@ -1,5 +1,4 @@
 // app.js
-
 // [LOAD PACKAGES]
 var express     = require('express');
 var app         = express();
@@ -17,6 +16,8 @@ var autocheck_box   = require('./src/api/cp_box/box_auto.js');
 // });
 //
 // mongoose.connect('mongodb://localhost/cloudpool_api_server');
+
+
 
 mongodb();
 autocheck();
@@ -41,7 +42,7 @@ var port = process.env.PORT || 4000;
 // [CONFIGURE ROUTER] - 스키마 전달
 var dropbox_router = require('./routes/dropbox_router')(app);
 var box_router = require('./routes/box_router')(app);
-
+var google_router = require('./routes/google_router')(app);
 
 // [RUN SERVER]
 var server = app.listen(port, function(){
