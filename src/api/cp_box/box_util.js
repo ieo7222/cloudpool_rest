@@ -2,6 +2,16 @@ module.exports = (function(){
   var async = require('async');
   var fs = require('fs');
   var box_file_list = require('../../../models/boxfilelist');
+  var mime = require('mime');
+
+  var mimelist = {
+    "document": ['application/x-abiword', 'text/css', 'text/csv', 'application/msword', 'application/vnd.oasis.opendocument.presentation', 'application/vnd.oasis.opendocument.spreadsheet', 'application/vnd.oasis.opendocument.text', 'application/vnd.ms-powerpoint', 'application/vnd.ms-excel'],
+    "pdf": ['application/pdf'],
+    "video": ['video/x-msvideo', 'video/ogg', 'video/webm', 'video/mp4', 'video/mpeg', 'video/avi', 'video/wmv', 'video/mkv', 'video/mpg'],
+    "image": ['image/gif', 'image/x-icon', 'image/jpeg', 'image/svg+xml', 'image/tiff', 'image/webp', 'image/jpg', 'image/png'],
+    "audio": ['audio/aac', 'audio/midi', 'audio/ogg', 'audio/x-wav', 'audio/webm', 'audio/mp3', 'audio/wma']
+    // "etc":
+  };
 
   var listAllFiles = function(client, folderId, callback) {
     client.folders.getItems(
@@ -12,21 +22,35 @@ module.exports = (function(){
       .then(function(items){
         var filelist = [];
         async.map(items.entries, function(item, callback_list){
-          var iteminfo = {
-            'id' : item.id,
-            'name' : item.name,
-            'type' : item.type,
-            'modifiedTime' : item.modified_at,
-            'size' : item.size,
-            'parents' : folderId
-          }
-          filelist.push(iteminfo);
           if(item.type=='folder'){
+            var iteminfo = {
+              'id' : item.id,
+              'name' : item.name,
+              'type' : item.type,
+              'modifiedTime' : item.modified_at,
+              'size' : item.size,
+              'parents' : folderId
+            }
+            filelist.push(iteminfo);
             listAllFiles(client,item.id,function(filelist_child){
               filelist = filelist.concat(filelist_child);
               callback_list(null, "finish");
             });
-          } else callback_list(null, "finish");
+          } else {
+            var fullname = item.name.split(".");
+            var extension = mime.getType(fullname[fullname.length - 1]);
+            var iteminfo = {
+              'id' : item.id,
+              'name' : item.name,
+              'type' : item.type,
+              'mimeType' : extension,
+              'modifiedTime' : item.modified_at,
+              'size' : item.size,
+              'parents' : folderId
+            }
+            filelist.push(iteminfo);
+            callback_list(null, "finish");
+          }
         }, function(err, result){
           if(err) console.log(err);
           else {
@@ -113,6 +137,65 @@ module.exports = (function(){
             }
           }
         );
+      }
+    });
+  }
+
+  var searchForSelectType = function (userId, selecttype, callback){
+    var Option={
+      "user_id":userId
+    }
+    box_file_list.find(Option,{file_list:1,_id:0} ,function(err, userlist){
+      if(err){
+        console.log("db Find method error : ",err);
+      }
+      else{
+        var filteredList =[];
+        if (selecttype == "document") {
+          var mimetype = mimelist.document;
+        } else if (selecttype == "PDF") {
+          var mimetype = mimelist.pdf;
+        } else if (selecttype == "video") {
+          var mimetype = mimelist.video;
+        } else if (selecttype == "image") {
+          var mimetype = mimelist.image;
+        } else if (selecttype == "audio") {
+          var mimetype = mimelist.audio;
+        }
+        var beforeFolder = {
+          'id' : 0,
+          'name' : '..',
+          'type' : 'folder'
+        }
+        filteredList.push(beforeFolder);
+        async.map(userlist[0].file_list, function(file,callback_list){
+          if(file.type=='folder') {
+            callback_list(null);
+          } else {
+            async.map(mimetype, function(type, callback_type){
+              if(file.mimeType == type){
+                filteredList.push(file);
+                callback_type(null);
+              } else callback_type(null);
+            }, function(err,result){
+              if(err) {
+                console.log('box_util err : '+err);
+                callback_list(null);
+              } else {
+                callback_list(null);
+              }
+            });
+          }
+        },
+        function(err,result){
+          if(err) {
+            console.log("box_util err : "+err);
+            callback(null);
+          }
+          else {
+            callback(filteredList);
+          }
+        });
       }
     });
   }
@@ -367,6 +450,7 @@ module.exports = (function(){
     listAllFiles: listAllFiles,
     searchForFolderId: searchForFolderId,
     searchForContent: searchForContent,
+    searchForSelectType: searchForSelectType,
     refreshFilelist: refreshFilelist,
     refreshToken: refreshToken,
     uploadFile: uploadFile,

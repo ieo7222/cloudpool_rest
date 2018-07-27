@@ -257,4 +257,12 @@ module.exports = function(app)
         res.json({list: fileList});
       });
     });
+
+    app.post('/api/box/select/', function(req, res){
+      var userId=req.body.user_id;
+      var selecttype =req.body.selecttype;
+      box_util.searchForSelectType(userId,selecttype,function(fileList){
+        res.json({list: fileList});
+      });
+    });
 }
